@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>学生材料核对系统 - Excel导入 | 自定义标题 | 三态主题</title>
+    <!-- SheetJS 用于导入导出 Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s, color 0.2s ease;
+        }
+
+        /* 基础变量 - 浅色主题 (默认) */
+        :root {
+            --bg-body: #eef2f7;
+            --bg-container: #ffffff;
+            --header-start: #1f4870;
+            --header-end: #2a5f8a;
+            --header-text: #ffffff;
+            --card-bg: #f9fbfe;
+            --border-light: #e2edf2;
+            --input-border: #cbd5e6;
+            --input-focus: #2a5f8a;
+            --btn-primary-bg: #2a5f8a;
+            --btn-primary-hover: #1f4870;
+            --btn-success-bg: #2c7a4d;
+            --btn-success-hover: #1e5a3a;
+            --table-header-bg: #f1f6f9;
+            --table-header-text: #1e2f3e;
+            --table-row-hover: #fafcff;
+            --table-border: #edf2f7;
+            --status-pass-bg: #e8f5e9;
+            --status-pass-text: #2c7a4d;
+            --status-fail-bg: #fee2e2;
+            --status-fail-text: #b91c1c;
+            --remark-input-bg: #ffffff;
+            --remark-input-text: #1e2f3e;
+            --footer-bg: #fafcff;
+            --footer-text: #6c7a8e;
+            --progress-bg: #e2e8f0;
+            --progress-fill: #2c7a4d;
+            --toast-bg: #1e293b;
+            --toast-text: #ffffff;
+            --danger-bg: #fee2e2;
+            --danger-text: #b91c1c;
+            --danger-hover: #fecaca;
+            --radio-border: #cbd5e6;
+            --theme-btn-bg: #ffffffcc;
+            --table-text-color: #1e2f3e;
+            --table-class-badge-bg: #eef2ff;
+            --table-class-badge-color: #1e3a5f;
+            --title-input-bg: #ffffff;
+            --upload-zone-bg: #f0f7ff;
+            --upload-zone-border: #a5c9ff;
+            --upload-zone-hover: #e1efff;
+            --student-id-color: #4b5563;
+        }
+
+        /* 深色主题变量 */
+        [data-theme="dark"] {
+            --bg-body: #121826;
+            --bg-container: #1e293b;
+            --header-start: #0f2b3d;
+            --header-end: #1a3a4f;
+            --header-text: #f1f5f9;
+            --card-bg: #0f172a;
+            --border-light: #334155;
+            --input-border: #475569;
+            --input-focus: #5b8cbf;
+            --btn-primary-bg: #2d4a6e;
+            --btn-primary-hover: #1e3a5f;
+            --btn-success-bg: #2d6a4f;
+            --btn-success-hover: #1f543e;
+            --table-header-bg: #0f172a;
+            --table-header-text: #e2e8f0;
+            --table-row-hover: #2d3748;
+            --table-border: #334155;
+            --status-pass-bg: #1e3a2f;
+            --status-pass-text: #7eef9e;
+            --status-fail-bg: #4a2525;
+            --status-fail-text: #ffb3b3;
+            --remark-input-bg: #0f172a;
+            --remark-input-text: #e2e8f0;
+            --footer-bg: #0f172a;
+            --footer-text: #94a3b8;
+            --progress-bg: #2d3748;
+            --progress-fill: #6fbf8a;
+            --toast-bg: #1e293b;
+            --toast-text: #f1f5f9;
+            --danger-bg: #4a2525;
+            --danger-text: #ffb3b3;
+            --danger-hover: #5c2e2e;
+            --radio-border: #475569;
+            --theme-btn-bg: #1e293bcc;
+            --table-text-color: #f1f5f9;
+            --table-class-badge-bg: #2d3748;
+            --table-class-badge-color: #cbd5f0;
+            --title-input-bg: #0f172a;
+            --upload-zone-bg: #1a2a3f;
+            --upload-zone-border: #4a6a8f;
+            --upload-zone-hover: #243b55;
+            --student-id-color: #94a3b8;
+        }
+
+        body {
+            background: var(--bg-body);
+            margin: 0;
+            padding: 24px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            width: 100%;
+            background: var(--bg-container);
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--header-start), var(--header-end));
+            color: var(--header-text);
+            padding: 1.3rem 2rem;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.7rem;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 6px 0 0;
+            opacity: 0.85;
+            font-size: 0.9rem;
+        }
+
+        /* 自定义标题区域 */
+        .title-customize-bar {
+            background: var(--card-bg);
+            margin: 1.5rem 2rem 0 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 28px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .title-label {
+            font-weight: 700;
+            color: var(--table-header-text);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .title-input-wrapper {
+            flex: 3;
+            min-width: 240px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #projectTitleInput {
+            flex: 2;
+            padding: 10px 16px;
+            border: 1px solid var(--input-border);
+            border-radius: 40px;
+            font-size: 0.95rem;
+            background: var(--title-input-bg);
+            color: var(--remark-input-text);
+            font-weight: 500;
+        }
+        #projectTitleInput:focus {
+            border-color: var(--input-focus);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(91,140,191,0.3);
+        }
+        .current-title-badge {
+            background: var(--table-header-bg);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: var(--table-header-text);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Excel 导入区域 */
+        .upload-panel {
+            background: var(--card-bg);
+            margin: 1rem 2rem 0 2rem;
+            padding: 1.2rem 1.5rem;
+            border-radius: 28px;
+            border: 1px solid var(--border-light);
+        }
+        .upload-title {
+            font-weight: 700;
+            color: var(--table-header-text);
+            margin-bottom: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .upload-zone {
+            background: var(--upload-zone-bg);
+            border: 2px dashed var(--upload-zone-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-zone:hover {
+            background: var(--upload-zone-hover);
+            border-color: var(--input-focus);
+        }
+        .upload-zone.dragover {
+            background: var(--upload-zone-hover);
+            border-color: var(--input-focus);
+            transform: scale(1.01);
+        }
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        .upload-text {
+            font-weight: 600;
+            color: var(--table-header-text);
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .upload-hint {
+            font-size: 0.75rem;
+            color: var(--footer-text);
+        }
+        .upload-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .student-count-badge {
+            background: var(--table-header-bg);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: var(--table-header-text);
+            font-weight: 600;
+        }
+
+        /* 快速录入卡片 */
+        .input-panel {
+            background: var(--card-bg);
+            margin: 1rem 2rem 0 2rem;
+            padding: 1.2rem 1.5rem;
+            border-radius: 28px;
+            border: 1px solid var(--border-light);
+        }
+        .input-title {
+            font-weight: 700;
+            color: var(--table-header-text);
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        .quick-input-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 16px;
+            row-gap: 20px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--footer-text);
+        }
+        .class-number-input {
+            width: 180px;
+            padding: 10px 14px;
+            border: 1px solid var(--input-border);
+            border-radius: 24px;
+            font-size: 1rem;
+            background: var(--remark-input-bg);
+            color: var(--remark-input-text);
+        }
+        .class-number-input:focus {
+            border-color: var(--input-focus);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(91,140,191,0.3);
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            background: var(--remark-input-bg);
+            padding: 6px 16px;
+            border-radius: 48px;
+            border: 1px solid var(--radio-border);
+            align-items: center;
+            height: 46px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--remark-input-text);
+        }
+        .btn-primary {
+            background: var(--btn-primary-bg);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover {
+            background: var(--btn-primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--btn-primary-bg);
+            color: var(--btn-primary-bg);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-outline:hover {
+            background: var(--btn-primary-bg);
+            color: white;
+        }
+        .btn-export {
+            background: var(--btn-success-bg);
+        }
+        .btn-export:hover {
+            background: var(--btn-success-hover);
+        }
+        .btn-danger {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        /* 汇总统计 + 进度条 */
+        .summary-section {
+            margin: 1.5rem 2rem 1.5rem 2rem;
+        }
+        .stats-progress-bar {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-light);
+        }
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .stats-badge {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--table-header-text);
+        }
+        .stats-badge span {
+            font-size: 1.2rem;
+            margin-right: 4px;
+        }
+        .action-buttons-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .small-btn {
+            background: var(--table-header-bg);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--table-header-text);
+            transition: 0.2s;
+        }
+        .small-btn:hover {
+            background: var(--progress-bg);
+        }
+        .progress-container {
+            margin-top: 12px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            color: var(--table-header-text);
+        }
+        .progress-bar-bg {
+            background-color: var(--progress-bg);
+            border-radius: 40px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background-color: var(--progress-fill);
+            width: 0%;
+            height: 100%;
+            border-radius: 40px;
+            transition: width 0.3s;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 24px;
+            border: 1px solid var(--border-light);
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .result-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .result-table th {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .result-table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--table-border);
+            vertical-align: middle;
+            color: var(--table-text-color);
+        }
+        .result-table tr:hover td {
+            background: var(--table-row-hover);
+        }
+        .student-name-cell {
+            font-weight: 600;
+        }
+        .student-id-cell {
+            color: var(--student-id-color);
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        .status-pass {
+            background: var(--status-pass-bg);
+            color: var(--status-pass-text);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .status-fail {
+            background: var(--status-fail-bg);
+            color: var(--status-fail-text);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .remark-input-cell {
+            min-width: 200px;
+        }
+        .remark-cell-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: var(--remark-input-bg);
+            color: var(--remark-input-text);
+        }
+        .remark-cell-input:focus {
+            border-color: var(--input-focus);
+            outline: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--footer-text);
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .empty-text {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--table-header-text);
+            font-weight: 600;
+        }
+        .empty-hint {
+            font-size: 0.8rem;
+        }
+        .footer-note {
+            background: var(--footer-bg);
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--footer-text);
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* 三态主题切换按钮组 */
+        .theme-switch-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            background: var(--theme-btn-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 4px;
+            padding: 6px;
+        }
+        .theme-option {
+            background: transparent;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--table-header-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .theme-option.active {
+            background: var(--btn-primary-bg);
+            color: white;
+        }
+        .theme-option:hover:not(.active) {
+            background: var(--progress-bg);
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            color: var(--toast-text);
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        @media (max-width: 760px) {
+            .title-customize-bar, .upload-panel, .input-panel, .summary-section {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+            .quick-input-group, .title-input-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .class-number-input, .radio-group, .btn-primary, #projectTitleInput {
+                width: 100%;
+                justify-content: center;
+            }
+            .stats-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .theme-switch-container {
+                bottom: 16px;
+                right: 16px;
+                padding: 4px;
+            }
+            .theme-option {
+                padding: 5px 12px;
+                font-size: 0.7rem;
+            }
+            .toast-msg {
+                white-space: normal;
+                text-align: center;
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1>📋 学生材料核对系统</h1>
+        <p>Excel 导入学生名单 · 逐个核对 · 进度跟踪 · 一键清空 · 三态主题</p>
+    </div>
+
+    <!-- 自定义标题区域 -->
+    <div class="title-customize-bar">
+        <div class="title-label">🏷️ 当前核对项目</div>
+        <div class="title-input-wrapper">
+            <input type="text" id="projectTitleInput" placeholder="例如：期中教学反思材料核对" value="2026年春季学期 综合实践报告核对">
+            <button id="applyTitleBtn" class="btn-outline">✏️ 应用标题</button>
+        </div>
+        <div class="current-title-badge" id="currentTitleDisplay">
+            📌 2026年春季学期 综合实践报告核对
+        </div>
+    </div>
+
+    <!-- Excel 导入区域 -->
+    <div class="upload-panel">
+        <div class="upload-title">📥 导入学生名单 (Excel)</div>
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">点击选择 Excel 文件，或将文件拖拽到此处</div>
+            <div class="upload-hint">支持 .xlsx / .xls 格式，需包含「姓名」「学号」两栏（含「班级」栏也可自动忽略）</div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+        <div class="upload-actions">
+            <button id="selectFileBtn" class="btn-primary">📁 选择 Excel 文件</button>
+            <button id="downloadTemplateBtn" class="btn-outline">📋 下载模板</button>
+            <div class="student-count-badge" id="studentCountBadge">📊 当前名单：0 人</div>
+        </div>
+    </div>
+
+    <!-- 快速录入区域 -->
+    <div class="input-panel">
+        <div class="input-title">✏️ 快速录入核对结果</div>
+        <div class="quick-input-group">
+            <div class="field">
+                <label>📌 输入学号或姓名</label>
+                <input type="text" id="searchInput" class="class-number-input" placeholder="例: 20230101 或 张三">
+            </div>
+            <div class="field">
+                <label>✅ 核对判定</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="statusRadio" value="pass" checked> ✅ 合格</label>
+                    <label><input type="radio" name="statusRadio" value="fail"> ❌ 不合格</label>
+                </div>
+            </div>
+            <div>
+                <button id="quickAddBtn" class="btn-primary">➕ 录入 / 更新</button>
+            </div>
+        </div>
+        <div style="font-size: 0.7rem; margin-top: 12px; color: var(--footer-text);">
+            💡 提示：支持学号或姓名精确匹配，录入会覆盖该生状态，备注保持不变；表格内可单独修改备注。
+        </div>
+    </div>
+
+    <!-- 统计、进度条、操作按钮 -->
+    <div class="summary-section">
+        <div class="stats-progress-bar">
+            <div class="stats-row">
+                <div class="stats-badge">
+                    <div>✅ 合格: <span id="passCount">0</span></div>
+                    <div>❌ 不合格: <span id="failCount">0</span></div>
+                    <div>📋 总计: <span id="totalCount">0</span></div>
+                </div>
+                <div class="action-buttons-group">
+                    <button id="batchAllPassBtn" class="small-btn">✅ 全部合格</button>
+                    <button id="batchResetFailBtn" class="small-btn">🔄 全部置为不合格</button>
+                    <button id="clearAllDataBtn" class="small-btn btn-danger">🗑️ 一键清空</button>
+                    <button id="exportXlsxBtn" class="small-btn" style="background: var(--btn-success-bg); color:white;">📎 导出 .xlsx</button>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>📊 核对完成进度 (合格率)</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-fill" id="progressFillBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学生名单表格 -->
+        <div class="table-wrapper">
+            <table class="result-table" id="resultTable">
+                <thead>
+                    <tr>
+                        <th style="width: 160px;">姓名</th>
+                        <th style="width: 180px;">学号</th>
+                        <th style="width: 120px;">核对结果</th>
+                        <th>备注 (可编辑)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 动态渲染 -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-text">尚未导入学生名单</div>
+                <div class="empty-hint">请点击上方「选择 Excel 文件」导入包含 姓名 / 学号 的名单</div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">
+        ⚡ 点击表格中的“合格/不合格”标签可快速切换状态；备注输入后自动保存；所有数据本地存储。
+    </div>
+</div>
+
+<!-- 三态主题切换按钮组 -->
+<div class="theme-switch-container">
+    <button class="theme-option" data-theme-mode="auto">🌓 跟随系统</button>
+    <button class="theme-option" data-theme-mode="light">☀️ 浅色</button>
+    <button class="theme-option" data-theme-mode="dark">🌙 深色</button>
+</div>
+
+<script>
+    (function() {
+        // 数据结构: { name, studentId, status, remark }
+        let records = [];
+        let currentProjectTitle = "2026年春季学期 综合实践报告核对";
+        
+        const STORAGE_KEY = 'student_checker_records_v2';
+        const THEME_STORAGE_KEY = 'grade_quick_theme_pref_v6';
+        const TITLE_STORAGE_KEY = 'student_checker_title_v2';
+
+        // DOM 元素
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const uploadZone = document.getElementById('uploadZone');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const studentCountBadge = document.getElementById('studentCountBadge');
+        const searchInput = document.getElementById('searchInput');
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        const exportXlsxBtn = document.getElementById('exportXlsxBtn');
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const passCountSpan = document.getElementById('passCount');
+        const failCountSpan = document.getElementById('failCount');
+        const totalCountSpan = document.getElementById('totalCount');
+        const progressFillBar = document.getElementById('progressFillBar');
+        const progressPercentSpan = document.getElementById('progressPercent');
+        const batchAllPassBtn = document.getElementById('batchAllPassBtn');
+        const batchResetFailBtn = document.getElementById('batchResetFailBtn');
+        const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+        const projectTitleInput = document.getElementById('projectTitleInput');
+        const applyTitleBtn = document.getElementById('applyTitleBtn');
+        const currentTitleDisplay = document.getElementById('currentTitleDisplay');
+
+        // 安全转义
+        function escapeHtmlSimple(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // 更新统计+进度条
+        function updateStatsAndProgress() {
+            const total = records.length;
+            const passCount = records.filter(r => r.status === 'pass').length;
+            const failCount = records.filter(r => r.status === 'fail').length;
+            passCountSpan.textContent = passCount;
+            failCountSpan.textContent = failCount;
+            totalCountSpan.textContent = total;
+            studentCountBadge.textContent = `📊 当前名单：${total} 人`;
+            const percent = total === 0 ? 0 : (passCount / total) * 100;
+            progressFillBar.style.width = `${percent}%`;
+            progressPercentSpan.textContent = `${Math.round(percent)}%`;
+        }
+
+        // 标题
+        function saveTitle() { localStorage.setItem(TITLE_STORAGE_KEY, currentProjectTitle); }
+        function loadTitle() {
+            const saved = localStorage.getItem(TITLE_STORAGE_KEY);
+            if (saved) currentProjectTitle = saved;
+            projectTitleInput.value = currentProjectTitle;
+            currentTitleDisplay.innerHTML = `📌 ${escapeHtmlSimple(currentProjectTitle)}`;
+        }
+        function applyNewTitle() {
+            let newTitle = projectTitleInput.value.trim();
+            if (newTitle === "") newTitle = "未命名核对任务";
+            currentProjectTitle = newTitle;
+            currentTitleDisplay.innerHTML = `📌 ${escapeHtmlSimple(currentProjectTitle)}`;
+            saveTitle();
+            showToast(`标题已更新：「${currentProjectTitle}」`, 1500);
+        }
+
+        // 保存/加载记录
+        function saveRecordsToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        }
+        function loadRecords() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        records = parsed;
+                        return;
+                    }
+                } catch(e) { console.warn(e); }
+            }
+            records = [];
+        }
+
+        // 渲染表格
+        function renderTable() {
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            // 空状态切换
+            if (records.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('resultTable').style.display = 'none';
+                updateStatsAndProgress();
+                return;
+            } else {
+                emptyState.style.display = 'none';
+                document.getElementById('resultTable').style.display = 'table';
+            }
+
+            for (let i = 0; i < records.length; i++) {
+                const rec = records[i];
+                const row = document.createElement('tr');
+
+                // 姓名
+                const tdName = document.createElement('td');
+                tdName.className = 'student-name-cell';
+                tdName.textContent = rec.name || '—';
+
+                // 学号
+                const tdId = document.createElement('td');
+                tdId.className = 'student-id-cell';
+                tdId.textContent = rec.studentId || '—';
+
+                // 状态
+                const tdStatus = document.createElement('td');
+                const statusSpan = document.createElement('span');
+                statusSpan.className = rec.status === 'pass' ? 'status-pass' : 'status-fail';
+                statusSpan.textContent = rec.status === 'pass' ? '✅ 合格' : '❌ 不合格';
+                statusSpan.style.cursor = 'pointer';
+                statusSpan.addEventListener('click', (function(idx) {
+                    return function() {
+                        const newStatus = records[idx].status === 'pass' ? 'fail' : 'pass';
+                        records[idx].status = newStatus;
+                        saveRecordsToLocal();
+                        renderTable();
+                        showToast(`${records[idx].name} 已改为 ${newStatus === 'pass' ? '合格' : '不合格'}`);
+                    };
+                })(i));
+                tdStatus.appendChild(statusSpan);
+
+                // 备注
+                const tdRemark = document.createElement('td');
+                tdRemark.className = 'remark-input-cell';
+                const remarkInput = document.createElement('input');
+                remarkInput.type = 'text';
+                remarkInput.placeholder = '缺交、迟交等备注...';
+                remarkInput.value = rec.remark || '';
+                remarkInput.className = 'remark-cell-input';
+                remarkInput.addEventListener('change', (function(idx) {
+                    return function(e) {
+                        records[idx].remark = e.target.value;
+                        saveRecordsToLocal();
+                        showToast(`${records[idx].name} 备注已保存`, 1000);
+                    };
+                })(i));
+                tdRemark.appendChild(remarkInput);
+
+                row.appendChild(tdName);
+                row.appendChild(tdId);
+                row.appendChild(tdStatus);
+                row.appendChild(tdRemark);
+                tableBody.appendChild(row);
+            }
+            updateStatsAndProgress();
+        }
+
+        // 查找学生索引
+        function findStudentIndex(key) {
+            key = String(key).trim();
+            if (!key) return -1;
+            let idx = records.findIndex(r => String(r.studentId).trim() === key);
+            if (idx !== -1) return idx;
+            idx = records.findIndex(r => String(r.name).trim() === key);
+            return idx;
+        }
+
+        // 快速录入
+        function quickAddOrUpdate() {
+            const key = searchInput.value.trim();
+            if (!key) {
+                showToast("请输入学号或姓名", 1200);
+                return;
+            }
+            const idx = findStudentIndex(key);
+            if (idx === -1) {
+                showToast(`未找到学生「${key}」，请检查输入`, 1500);
+                return;
+            }
+            const selectedStatus = document.querySelector('input[name="statusRadio"]:checked').value;
+            if (records[idx].status !== selectedStatus) {
+                records[idx].status = selectedStatus;
+                saveRecordsToLocal();
+                renderTable();
+                showToast(`✅ 已更新 ${records[idx].name} 为 ${selectedStatus === 'pass' ? '合格' : '不合格'}`, 1300);
+            } else {
+                showToast(`${records[idx].name} 已经是${selectedStatus === 'pass' ? '合格' : '不合格'}状态`, 1000);
+            }
+        }
+
+        // Excel 导入
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                    if (jsonData.length < 2) {
+                        showToast("文件内容为空或格式不正确", 1500);
+                        return;
+                    }
+                    // 解析表头
+                    const headers = jsonData[0].map(h => String(h).trim());
+                    // 只查找姓名和学号列，班级列如果有也不使用
+                    const nameIdx = headers.findIndex(h => h.includes('姓名') || h.toLowerCase().includes('name'));
+                    const idIdx = headers.findIndex(h => h.includes('学号') || h.toLowerCase().includes('id') || h.includes('学籍'));
+                    if (nameIdx === -1 || idIdx === -1) {
+                        showToast("未找到「姓名」「学号」栏，请检查表头", 2000);
+                        return;
+                    }
+
+                    const newRecords = [];
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0) continue;
+                        const name = String(row[nameIdx] || '').trim();
+                        const studentId = String(row[idIdx] || '').trim();
+                        if (!name && !studentId) continue;
+                        newRecords.push({
+                            name: name,
+                            studentId: studentId,
+                            status: 'fail',
+                            remark: ''
+                        });
+                    }
+
+                    if (newRecords.length === 0) {
+                        showToast("未解析到有效学生数据", 1500);
+                        return;
+                    }
+
+                    // 尝试保留原有状态和备注（按学号匹配）
+                    const oldMap = new Map();
+                    for (let r of records) {
+                        if (r.studentId) oldMap.set(String(r.studentId).trim(), r);
+                    }
+                    for (let r of newRecords) {
+                        const old = oldMap.get(String(r.studentId).trim());
+                        if (old) {
+                            r.status = old.status || 'fail';
+                            r.remark = old.remark || '';
+                        }
+                    }
+
+                    records = newRecords;
+                    saveRecordsToLocal();
+                    renderTable();
+                    showToast(`✅ 成功导入 ${records.length} 位学生`, 2000);
+                } catch (err) {
+                    console.error(err);
+                    showToast("解析文件失败，请检查格式", 2000);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 下载模板（去掉班级列）
+        function downloadTemplate() {
+            const templateData = [
+                ["姓名", "学号"],
+                ["张三", "20230101"],
+                ["李四", "20230102"],
+                ["王五", "20230201"]
+            ];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            ws['!cols'] = [{wch:14},{wch:16}];
+            XLSX.utils.book_append_sheet(wb, ws, "学生名单模板");
+            XLSX.writeFile(wb, "学生名单模板.xlsx");
+            showToast("模板已下载", 1200);
+        }
+
+        // 批量全部合格
+        function batchAllPass() {
+            if (records.length === 0) { showToast("暂无学生名单", 1200); return; }
+            let changed = false;
+            for (let i = 0; i < records.length; i++) {
+                if (records[i].status !== 'pass') {
+                    records[i].status = 'pass';
+                    changed = true;
+                }
+            }
+            if (changed) {
+                saveRecordsToLocal();
+                renderTable();
+                showToast("所有学生已设为「合格」", 1500);
+            } else {
+                showToast("所有学生已经是合格状态", 1200);
+            }
+        }
+
+        // 批量全部置为不合格
+        function batchAllFail() {
+            if (records.length === 0) { showToast("暂无学生名单", 1200); return; }
+            let changed = false;
+            for (let i = 0; i < records.length; i++) {
+                if (records[i].status !== 'fail') {
+                    records[i].status = 'fail';
+                    changed = true;
+                }
+            }
+            if (changed) {
+                saveRecordsToLocal();
+                renderTable();
+                showToast("所有学生已设为「不合格」", 1500);
+            } else {
+                showToast("所有学生已经是不合格状态", 1200);
+            }
+        }
+
+        // 一键清空
+        function clearAllData() {
+            if (records.length === 0) { showToast("暂无数据可清空", 1200); return; }
+            const confirmClear = confirm('⚠️ 危险操作：一键清空将删除导入的学生名单及所有核对状态和备注！不可撤销，确定继续吗？');
+            if (!confirmClear) return;
+            records = [];
+            saveRecordsToLocal();
+            renderTable();
+            searchInput.value = '';
+            showToast("✅ 已清空所有学生名单与数据", 2000);
+        }
+
+        // 导出 .xlsx
+        function exportToXLSX() {
+            if (records.length === 0) {
+                showToast("暂无数据可导出", 1200);
+                return;
+            }
+            const sheetData = [[`核对项目：${currentProjectTitle}`], [], ["姓名", "学号", "核对结果", "备注"]];
+            for (let rec of records) {
+                const statusText = rec.status === 'pass' ? "合格" : "不合格";
+                sheetData.push([rec.name || "", rec.studentId || "", statusText, rec.remark || ""]);
+            }
+            const passCnt = records.filter(r => r.status === 'pass').length;
+            const failCnt = records.filter(r => r.status === 'fail').length;
+            sheetData.push([], [`统计：合格 ${passCnt} 人，不合格 ${failCnt} 人，总计 ${records.length} 人`]);
+            sheetData.push([`导出时间：${new Date().toLocaleString()}`]);
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+            ws['!cols'] = [{wch:14},{wch:18},{wch:12},{wch:32}];
+            XLSX.utils.book_append_sheet(wb, ws, "学生核对结果");
+            let safeTitle = currentProjectTitle.replace(/[\\/:*?"<>|]/g, '_').substring(0, 30);
+            XLSX.writeFile(wb, `${safeTitle}_学生核对_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+            showToast("导出成功 .xlsx", 1500);
+        }
+
+        let toastTimer = null;
+        function showToast(msg, duration = 1500) {
+            const exist = document.querySelector('.toast-msg');
+            if (exist) exist.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.remove(), duration);
+        }
+
+        // ========= 三态主题逻辑 =========
+        let activeThemeMode = 'auto';
+        function applyTheme(mode) {
+            activeThemeMode = mode;
+            if (mode === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else if (mode === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            }
+            localStorage.setItem(THEME_STORAGE_KEY, mode);
+            updateActiveButtonUI(mode);
+        }
+        function systemThemeListener(e) {
+            if (activeThemeMode === 'auto') {
+                document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }
+        }
+        function updateActiveButtonUI(mode) {
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                const btnMode = btn.getAttribute('data-theme-mode');
+                if (btnMode === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+        function loadThemePreference() {
+            const saved = localStorage.getItem(THEME_STORAGE_KEY);
+            let mode = 'auto';
+            if (saved === 'light') mode = 'light';
+            else if (saved === 'dark') mode = 'dark';
+            applyTheme(mode);
+            const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+            darkModeMedia.addEventListener('change', systemThemeListener);
+        }
+        function bindThemeEvents() {
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mode = btn.getAttribute('data-theme-mode');
+                    applyTheme(mode);
+                });
+            });
+        }
+
+        // 事件绑定
+        function bindEvents() {
+            selectFileBtn.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                    fileInput.value = '';
+                }
+            });
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            downloadTemplateBtn.addEventListener('click', downloadTemplate);
+            quickAddBtn.addEventListener('click', quickAddOrUpdate);
+            exportXlsxBtn.addEventListener('click', exportToXLSX);
+            batchAllPassBtn.addEventListener('click', batchAllPass);
+            batchResetFailBtn.addEventListener('click', batchAllFail);
+            clearAllDataBtn.addEventListener('click', clearAllData);
+            applyTitleBtn.addEventListener('click', applyNewTitle);
+            searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') quickAddOrUpdate(); });
+            projectTitleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') applyNewTitle(); });
+        }
+
+        // 启动
+        function init() {
+            loadRecords();
+            loadTitle();
+            renderTable();
+            bindEvents();
+            loadThemePreference();
+            bindThemeEvents();
+        }
+        init();
+    })();
+</script>
+</body>
+</html>
